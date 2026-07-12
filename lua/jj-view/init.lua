@@ -105,25 +105,26 @@ end
 
 -- ===== rendering helpers =====
 
--- Link our groups to standard ones so we follow the active colorscheme. The
--- whole panel is colored; the only actionable lines (the file paths) are
--- underlined, so it's clear that <CR> acts on those and not on the context.
+-- Link our groups to standard ones so we follow the active colorscheme. Each
+-- section gets its own hue for a colorful panel; the actionable lines (the file
+-- paths) are the only underlined ones, so it's clear <CR> acts on those.
 local function set_highlights()
     local function d(name, link)
         vim.api.nvim_set_hl(0, name, { link = link, default = true })
     end
     d("JjViewTitle", "Title") -- banner and the "Files (N)" heading
-    d("JjViewLabel", "Comment") -- field labels: Change / Bookmark / Parent
+    d("JjViewLabel", "Label") -- field labels: Change / Bookmark / Parent
     d("JjViewChange", "Identifier") -- change ids
     d("JjViewBookmark", "Special") -- bookmark names
-    d("JjViewDesc", "Normal") -- the description text
-    d("JjViewHint", "Comment") -- the footer key hints
+    d("JjViewDesc", "Comment") -- the description text
+    d("JjViewHint", "NonText") -- the footer key hints
     d("JjViewAdded", "Added")
     d("JjViewModified", "Changed")
     d("JjViewRemoved", "Removed")
     d("JjViewRenamed", "Changed")
-    -- actionable file paths: underlined (like a link), colored by Normal
-    vim.api.nvim_set_hl(0, "JjViewFile", { underline = true, default = true })
+    -- actionable file paths: colored like a directory and underlined (link-like)
+    local dir = vim.api.nvim_get_hl(0, { name = "Directory", link = false })
+    vim.api.nvim_set_hl(0, "JjViewFile", { fg = dir.fg, underline = true, default = true })
 end
 
 -- Rebuild the panel contents from a fresh jj query. ignore_wc is forwarded to
