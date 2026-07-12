@@ -1,0 +1,101 @@
+*jj-view.txt*  A narrow side panel for jj working-copy changes
+
+==============================================================================
+CONTENTS                                                        *jj-view*
+
+    1. Introduction ......................... |jj-view-intro|
+    2. Setup ................................ |jj-view-setup|
+    3. Keys ................................. |jj-view-keys|
+    4. Commands ............................. |jj-view-commands|
+    5. Highlights ........................... |jj-view-highlights|
+    6. How it refreshes ..................... |jj-view-refresh|
+
+==============================================================================
+1. Introduction                                                *jj-view-intro*
+
+jj-view is a file-explorer style sidebar for jj (https://github.com/jj-vcs/jj).
+It shows, for the working-copy commit (@):
+
+    - the change id
+    - the local bookmark, if any
+    - the description
+    - every edited file (the `jj st` set), with M/A/D status
+    - the parent change: short id and bookmark
+
+The file paths are underlined; that is the cue that only those lines are
+actionable. There is no diffing. Requires Neovim 0.10+ and `jj` on PATH.
+
+==============================================================================
+2. Setup                                                       *jj-view-setup*
+
+With the builtin plugin manager: >lua
+
+    vim.pack.add({ "https://github.com/devjgm/jj-view.nvim" })
+    require("jj-view").setup()
+<
+setup() accepts: >lua
+
+    require("jj-view").setup({
+        width = 38,        -- panel width in columns
+        key = "<C-S-J>",   -- global toggle key
+    })
+<
+==============================================================================
+3. Keys                                                         *jj-view-keys*
+
+Global:
+    <C-S-J>     toggle the panel (see the note below)
+
+In the panel:
+    <CR>, o     open the file under the cursor in the main window
+    p           open the file but keep focus in the panel (preview)
+    R           refresh
+    q           close
+
+`<C-S-J>` (Ctrl-Shift-J) is only distinct from a plain <C-j> in terminals that
+support the kitty keyboard protocol (ghostty, kitty, wezterm). Elsewhere, use
+|:JjView|. Under tmux, focus-based refresh needs `set -g focus-events on`.
+
+==============================================================================
+4. Commands                                                 *jj-view-commands*
+
+                                                                      *:JjView*
+:JjView         Toggle the panel.
+
+Lua API: `require("jj-view")` exposes `open()`, `close()`, `toggle()`,
+`refresh()`, and `open_file(stay)`.
+
+==============================================================================
+5. Highlights                                             *jj-view-highlights*
+
+All groups link to standard ones by default; override before or after setup to
+restyle: >lua
+
+    vim.api.nvim_set_hl(0, "JjViewFile", { link = "Directory" })
+<
+    JjViewTitle     banner and the "Files (N)" heading (default: Title)
+    JjViewLabel     field labels: Change/Bookmark/Parent (default: Comment)
+    JjViewChange    change ids (default: Identifier)
+    JjViewBookmark  bookmark names (default: Special)
+    JjViewDesc      the description text (default: Normal)
+    JjViewFile      actionable file paths (default: underlined)
+    JjViewHint      the footer key hints (default: Comment)
+    JjViewAdded     added-file status letter (default: Added)
+    JjViewModified  modified-file status letter (default: Changed)
+    JjViewRemoved   removed-file status letter (default: Removed)
+    JjViewRenamed   renamed/copied status letter (default: Changed)
+
+The file paths are underlined (JjViewFile) as the cue that only those lines are
+actionable.
+
+==============================================================================
+6. How it refreshes                                          *jj-view-refresh*
+
+The panel re-reads jj on: open, `R`, `:w` (BufWritePost), and when Neovim
+regains focus or you step into the panel. The focus/enter re-reads pass
+`--ignore-working-copy` so they never snapshot the working copy; that avoids
+racing a snapshot against a jj running in another terminal (which is what
+creates divergent operations). Your own edits still show because open, `R`, and
+save do snapshot.
+
+vim:tw=78:ts=8:ft=help:norl:
