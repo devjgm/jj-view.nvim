@@ -23,7 +23,8 @@ It shows, for the working-copy commit (@):
     - the parent change: short id and bookmark
 
 The file paths are underlined; that is the cue that only those lines are
-actionable. There is no diffing. Requires Neovim 0.10+ and `jj` on PATH.
+actionable. `d` pops the file's `jj diff` in a float. Requires Neovim 0.10+
+and `jj` on PATH.
 
 ==============================================================================
 2. Setup                                                       *jj-view-setup*
@@ -49,6 +50,7 @@ Global:
 In the panel:
     <CR>, o     open the file under the cursor in the main window
     p           open the file but keep focus in the panel (preview)
+    d           pop up `jj diff` for the file in a floating window
     R           refresh
     q           close
 

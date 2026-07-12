@@ -109,7 +109,7 @@ it("parse_parents: multiple parents (a merge)", function()
     })
 end)
 
-it("build_lines: banner has the version, files map to abs paths", function()
+it("build_lines: banner + version, files map to abs paths, parent at the bottom", function()
     local meta = { change = "abcd1234", bookmark = "greg/x", description = "hi" }
     local files = {
         { status = "M", path = "a.rs", abs = "/r/a.rs" },
@@ -126,15 +126,15 @@ it("build_lines: banner has the version, files map to abs paths", function()
     end
     eq(abses, { ["/r/a.rs"] = true, ["/r/b.rs"] = true })
 
-    local has_heading, has_parent = false, false
+    local has_files, has_parent = false, false
     for _, l in ipairs(lines) do
         if l == "  Files (2)" then
-            has_heading = true
+            has_files = true
         elseif l == "   pppp0000  main" then
             has_parent = true
         end
     end
-    eq(has_heading, true)
+    eq(has_files, true)
     eq(has_parent, true)
     eq(#hl > 0, true)
 end)

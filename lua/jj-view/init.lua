@@ -206,6 +206,7 @@ local function ensure_buf()
     map("p", function()
         M.open_file(true) -- open but keep focus in the panel
     end)
+    map("d", M.diff_file)
     map("q", M.close)
     map("R", M.refresh)
     map(config.key, M.toggle)
@@ -274,41 +275,84 @@ function M.refresh(ignore_wc)
     end
 end
 
--- Open the file on the cursor line in the main editor window. When stay is
--- true, focus returns to the panel afterward (preview style), so you can keep
--- moving through the list.
-function M.open_file(stay)
-    -- read from the current window (0): the mapping only fires from a window
-    -- showing the panel buffer, and state.win may be stale if it is shown twice.
-    local lnum = vim.api.nvim_win_get_cursor(0)[1]
-    local path = state.line_files[lnum]
-    if not path then
-        return
-    end
-    -- a usable target is a real (non-floating) window other than the panel
+-- A real (non-floating) window other than the panel to host a file, preferring
+-- prev_win; nil if none exists.
+local function target_window()
     local function usable(w)
         return w
             and vim.api.nvim_win_is_valid(w)
             and w ~= state.win
             and vim.api.nvim_win_get_config(w).relative == ""
     end
-    local target = usable(state.prev_win) and state.prev_win or nil
-    if not target then
-        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-            if usable(w) then
-                target = w
-                break
-            end
+    if usable(state.prev_win) then
+        return state.prev_win
+    end
+    for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if usable(w) then
+            return w
         end
     end
+    return nil
+end
+
+-- Focus a real window for a file, creating one if the panel is alone.
+local function focus_target()
+    local target = target_window()
     if target then
         vim.api.nvim_set_current_win(target)
     else
-        vim.cmd("botright vsplit") -- panel is the only window: make a real one
+        vim.cmd("botright vsplit")
     end
+end
+
+-- Open the file on the cursor line in the main editor window. When stay is
+-- true, focus returns to the panel afterward (preview style), so you can keep
+-- moving through the list.
+function M.open_file(stay)
+    -- read from the current window (0): the mapping only fires from a window
+    -- showing the panel buffer, and state.win may be stale if it is shown twice.
+    local path = state.line_files[vim.api.nvim_win_get_cursor(0)[1]]
+    if not path then
+        return
+    end
+    focus_target()
     vim.cmd("edit " .. vim.fn.fnameescape(path))
     if stay and is_open() then
         vim.api.nvim_set_current_win(state.win)
+    end
+end
+
+-- Pop up `jj diff` for the file under the cursor in a floating terminal. Running
+-- it in a terminal (a tty) means jj renders it exactly as in your shell: your
+-- configured diff tool (difftastic, ...) and its colors, against the same parent.
+function M.diff_file()
+    local path = state.line_files[vim.api.nvim_win_get_cursor(0)[1]]
+    if not path then
+        return
+    end
+
+    local w = math.min(180, math.max(80, math.floor(vim.o.columns * 0.85)))
+    local h = math.max(10, math.floor(vim.o.lines * 0.85))
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_open_win(buf, true, {
+        relative = "editor",
+        width = w,
+        height = h,
+        row = math.floor((vim.o.lines - h) / 2),
+        col = math.floor((vim.o.columns - w) / 2),
+        border = "rounded",
+        style = "minimal",
+        title = " jj diff: " .. vim.fn.fnamemodify(path, ":t") .. " ",
+    })
+    vim.bo[buf].bufhidden = "wipe"
+    -- never paginate: a pager would hijack the floating terminal
+    vim.fn.jobstart({ "jj", "--config", "ui.paginate=never", "diff", path }, {
+        term = true,
+        cwd = state.root,
+    })
+    vim.cmd("stopinsert") -- stay in normal mode so q / Esc close the float
+    for _, k in ipairs({ "q", "<Esc>" }) do
+        vim.keymap.set("n", k, "<cmd>close<cr>", { buffer = buf, nowait = true, silent = true })
     end
 end
 
@@ -406,6 +450,34 @@ function M.setup(opts)
                         pcall(vim.cmd, "quit")
                     end
                 end
+            end)
+        end,
+    })
+
+    -- The panel must never host a file. If something opens a buffer in the panel
+    -- window (fzf-lua, :edit while focused here, ...), restore the panel and
+    -- re-home that buffer in a real window instead. Deferred, so it runs after
+    -- the opening command settles rather than fighting it mid-flight.
+    vim.api.nvim_create_autocmd("BufWinEnter", {
+        group = group,
+        callback = function(args)
+            if not is_open() or args.buf == state.buf then
+                return
+            end
+            if vim.api.nvim_get_current_win() ~= state.win then
+                return
+            end
+            local panel, foreign = state.win, args.buf
+            vim.schedule(function()
+                if not vim.api.nvim_win_is_valid(panel) then
+                    return
+                end
+                if vim.api.nvim_win_get_buf(panel) ~= foreign then
+                    return -- already moved on
+                end
+                vim.api.nvim_win_set_buf(panel, state.buf) -- put the panel back
+                focus_target() -- move to (or make) a real window
+                vim.api.nvim_win_set_buf(0, foreign) -- show the file there
             end)
         end,
     })

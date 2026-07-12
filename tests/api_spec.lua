@@ -74,6 +74,37 @@ it("open: renders the version banner and the working-copy file", function()
     jv.close()
 end)
 
+it("d: opens a floating terminal jj diff for the file under the cursor", function()
+    jv.setup()
+    jv.open() -- cursor lands on the first file line
+    jv.diff_file()
+    vim.wait(100)
+    local float
+    for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        local cfg = vim.api.nvim_win_get_config(w)
+        if cfg.relative ~= "" and vim.bo[vim.api.nvim_win_get_buf(w)].buftype == "terminal" then
+            float = w
+        end
+    end
+    eq(float ~= nil, true)
+    if float then
+        vim.api.nvim_win_close(float, true)
+    end
+    jv.close()
+end)
+
+it("eject: opening a file while focused in the panel re-homes it", function()
+    jv.setup()
+    jv.open()
+    vim.api.nvim_set_current_win(panel_win())
+    vim.cmd("edit " .. vim.fn.fnameescape(dir .. "/a.txt"))
+    vim.wait(100) -- let the scheduled eject run
+    eq(panel_win() ~= nil, true)
+    eq(vim.bo[vim.api.nvim_win_get_buf(panel_win())].filetype, "jjview")
+    eq(vim.api.nvim_get_current_win() ~= panel_win(), true)
+    jv.close()
+end)
+
 it("auto-close: panel stays while another real window remains", function()
     jv.setup()
     jv.open() -- panel + the original window

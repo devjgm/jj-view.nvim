@@ -120,8 +120,9 @@ end
 --   lines       list of strings
 --   hl          list of { row, col, end_col, group }; end_col -1 = to line end
 --   line_files  map of 1-based line number -> absolute path to open
--- The panel is fully colored; the file paths are underlined (JjViewFile), the
--- one visual cue that those are the actionable lines.
+-- The top focuses on the current change (meta + files); the bottom shows the
+-- parent. The file paths are underlined (JjViewFile), the one visual cue that
+-- those are the actionable lines.
 function M.build_lines(meta, files, parents, width, version)
     local lines, hl, line_files = {}, {}, {}
     local function add(text)
@@ -185,7 +186,9 @@ function M.build_lines(meta, files, parents, width, version)
     end
 
     add("")
-    for _, l in ipairs(M.pack({ "CR open", "p preview", "R refresh", "q close" }, width - 2)) do
+    for _, l in
+        ipairs(M.pack({ "CR open", "p preview", "d diff", "R refresh", "q close" }, width - 2))
+    do
         mark(add(" " .. l), 0, -1, "JjViewHint")
     end
 

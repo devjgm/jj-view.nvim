@@ -11,8 +11,8 @@ It shows:
 - every file edited in the working copy (`jj st`)
 - the parent change: short id and bookmark
 
-Press `<CR>` on a file to open it in the main window, or `p` to open it while
-keeping focus in the panel. No diffing.
+Press `<CR>` on a file to open it in the main window, `p` to open it while
+keeping focus in the panel, or `d` to pop up its `jj diff` in a float.
 
 ## Install
 
@@ -31,6 +31,7 @@ require("jj-view").setup()
 | `:JjView`      | global | toggle the panel                |
 | `<CR>` / `o`   | panel  | open the file under the cursor  |
 | `p`            | panel  | open the file, keep focus here  |
+| `d`            | panel  | `jj diff` the file in a float   |
 | `R`            | panel  | refresh                         |
 | `q`            | panel  | close                           |
 
