@@ -27,7 +27,6 @@ require("jj-view").setup()
 
 | Key            | Where  | Action                          |
 | -------------- | ------ | ------------------------------- |
-| `<C-S-J>`      | global | toggle the panel                |
 | `:JjView`      | global | toggle the panel                |
 | `<CR>` / `o`   | panel  | open the file under the cursor  |
 | `p`            | panel  | open the file, keep focus here  |
@@ -35,15 +34,17 @@ require("jj-view").setup()
 | `R`            | panel  | refresh                         |
 | `q`            | panel  | close                           |
 
-`<C-S-J>` (Ctrl-Shift-J) needs a terminal that speaks the kitty keyboard
-protocol (ghostty, kitty, wezterm). Otherwise use `:JjView`.
+jj-view sets no global keymap. Map `:JjView` to whatever you like:
+
+```lua
+vim.keymap.set("n", "<leader>j", "<cmd>JjView<cr>", { desc = "jj-view" })
+```
 
 ## Config
 
 ```lua
 require("jj-view").setup({
     width = 38,      -- panel width
-    key = "<C-S-J>", -- toggle key
 })
 ```
 

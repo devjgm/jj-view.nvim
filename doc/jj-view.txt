@@ -38,15 +38,15 @@ setup() accepts: >lua
 
     require("jj-view").setup({
         width = 38,        -- panel width in columns
-        key = "<C-S-J>",   -- global toggle key
     })
 <
 ==============================================================================
 3. Keys                                                         *jj-view-keys*
 
-Global:
-    <C-S-J>     toggle the panel (see the note below)
+jj-view sets no global keymap; map |:JjView| to a key of your choosing: >lua
 
+    vim.keymap.set("n", "<leader>j", "<cmd>JjView<cr>", { desc = "jj-view" })
+<
 In the panel:
     <CR>, o     open the file under the cursor in the main window
     p           open the file but keep focus in the panel (preview)
@@ -54,9 +54,7 @@ In the panel:
     R           refresh
     q           close
 
-`<C-S-J>` (Ctrl-Shift-J) is only distinct from a plain <C-j> in terminals that
-support the kitty keyboard protocol (ghostty, kitty, wezterm). Elsewhere, use
-|:JjView|. Under tmux, focus-based refresh needs `set -g focus-events on`.
+Under tmux, focus-based refresh needs `set -g focus-events on`.
 
 ==============================================================================
 4. Commands                                                 *jj-view-commands*

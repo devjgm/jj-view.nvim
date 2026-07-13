@@ -9,9 +9,6 @@ M.version = "0.1.0"
 
 local config = {
     width = 38,
-    -- toggle key. Ctrl-Shift-J needs a terminal that speaks the kitty
-    -- keyboard protocol (ghostty, kitty, wezterm, ...); otherwise use :JjView.
-    key = "<C-S-j>",
 }
 
 local ns = vim.api.nvim_create_namespace("jjview")
@@ -209,7 +206,6 @@ local function ensure_buf()
     map("d", M.diff_file)
     map("q", M.close)
     map("R", M.refresh)
-    map(config.key, M.toggle)
     state.buf = buf
 end
 
@@ -362,8 +358,8 @@ function M.setup(opts)
     config = vim.tbl_extend("force", config, opts or {})
     set_highlights()
 
+    -- expose only the command; users map it to a key of their choosing
     vim.api.nvim_create_user_command("JjView", M.toggle, { desc = "Toggle jj-view panel" })
-    vim.keymap.set("n", config.key, M.toggle, { desc = "Toggle jj-view", silent = true })
 
     local group = vim.api.nvim_create_augroup("JjView", { clear = true })
 
