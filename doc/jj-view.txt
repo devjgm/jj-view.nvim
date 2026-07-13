@@ -63,7 +63,17 @@ Under tmux, focus-based refresh needs `set -g focus-events on`.
 :JjView         Toggle the panel.
 
 Lua API: `require("jj-view")` exposes `open()`, `close()`, `toggle()`,
-`refresh()`, and `open_file(stay)`.
+`refresh()`, `open_file(stay)`, `diff_file()`, and `diff_path(path)`.
+
+`diff_path(path)` pops the same floating `jj diff` the panel's `d` key uses, but
+for any file, so you can diff the file you are editing without the panel: >lua
+
+    vim.keymap.set("n", "<leader>d", function()
+        require("jj-view").diff_path(vim.fn.expand("%:p"))
+    end, { desc = "jj diff current file" })
+<
+The workspace root is resolved from the file's own directory, so it works with
+the panel closed and even when nvim's cwd is a different repo than the file.
 
 ==============================================================================
 5. Highlights                                             *jj-view-highlights*

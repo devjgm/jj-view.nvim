@@ -40,6 +40,21 @@ jj-view sets no global keymap. Map `:JjView` to whatever you like:
 vim.keymap.set("n", "<leader>j", "<cmd>JjView<cr>", { desc = "jj-view" })
 ```
 
+## Diffing the current file
+
+`require("jj-view").diff_path(path)` pops the same floating `jj diff` the
+panel's `d` key uses, but for any file, so you can diff the file you are editing
+without opening the panel:
+
+```lua
+vim.keymap.set("n", "<leader>d", function()
+    require("jj-view").diff_path(vim.fn.expand("%:p"))
+end, { desc = "jj diff current file" })
+```
+
+The workspace root is resolved from the file's own directory, so it works with
+the panel closed and even when nvim's cwd is a different repo than the file.
+
 ## Config
 
 ```lua

@@ -94,6 +94,23 @@ it("d: opens a floating terminal jj diff for the file under the cursor", functio
     jv.close()
 end)
 
+it("diff_path: opens a floating terminal jj diff without the panel", function()
+    jv.setup() -- no jv.open(): diff_path must not depend on the panel
+    jv.diff_path(dir .. "/a.txt")
+    vim.wait(100)
+    local float
+    for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        local cfg = vim.api.nvim_win_get_config(w)
+        if cfg.relative ~= "" and vim.bo[vim.api.nvim_win_get_buf(w)].buftype == "terminal" then
+            float = w
+        end
+    end
+    eq(float ~= nil, true)
+    if float then
+        vim.api.nvim_win_close(float, true)
+    end
+end)
+
 it("eject: opening a file while focused in the panel re-homes it", function()
     jv.setup()
     jv.open()

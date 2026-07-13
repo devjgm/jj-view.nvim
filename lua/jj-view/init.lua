@@ -32,7 +32,9 @@ local state = { win = nil, buf = nil, prev_win = nil, line_files = {}, root = ni
 -- so we don't race a snapshot against a jj running in another terminal (which
 -- is what produces divergent operations). External changes are already
 -- snapshotted by that other terminal, so we still see them.
-local function jj(args, ignore_wc)
+-- cwd, when given, runs jj there instead of nvim's process cwd; used to resolve
+-- a file's own workspace (see get_root) so diffing works across repos.
+local function jj(args, ignore_wc, cwd)
     local cmd = { "jj" }
     if ignore_wc then
         table.insert(cmd, "--ignore-working-copy")
@@ -42,7 +44,7 @@ local function jj(args, ignore_wc)
     -- error; the timeout keeps a hung jj (lock contention, slow fsmonitor) from
     -- freezing nvim.
     local ok, res = pcall(function()
-        return vim.system(cmd, { text = true }):wait(2000)
+        return vim.system(cmd, { text = true, cwd = cwd }):wait(2000)
     end)
     if not ok then
         return false, "", tostring(res)
@@ -51,9 +53,10 @@ local function jj(args, ignore_wc)
 end
 
 -- Absolute workspace root, so files open correctly regardless of nvim's cwd
--- (jj prints its file paths relative to this root).
-local function get_root()
-    local ok, out = jj({ "root" })
+-- (jj prints its file paths relative to this root). dir, when given, resolves
+-- the root of the workspace containing it rather than nvim's cwd.
+local function get_root(dir)
+    local ok, out = jj({ "root" }, false, dir)
     if not ok then
         return nil
     end
@@ -327,15 +330,10 @@ function M.open_file(stay)
     end
 end
 
--- Pop up `jj diff` for the file under the cursor in a floating terminal. Running
+-- Pop up `jj diff` for `path` in a floating terminal, run from `root`. Running
 -- it in a terminal (a tty) means jj renders it exactly as in your shell: your
 -- configured diff tool (difftastic, ...) and its colors, against the same parent.
-function M.diff_file()
-    local path = state.line_files[vim.api.nvim_win_get_cursor(0)[1]]
-    if not path then
-        return
-    end
-
+local function diff_float(path, root)
     local w = math.min(180, math.max(80, math.floor(vim.o.columns * 0.85)))
     local h = math.max(10, math.floor(vim.o.lines * 0.85))
     local buf = vim.api.nvim_create_buf(false, true)
@@ -353,12 +351,42 @@ function M.diff_file()
     -- never paginate: a pager would hijack the floating terminal
     vim.fn.jobstart({ "jj", "--config", "ui.paginate=never", "diff", path }, {
         term = true,
-        cwd = state.root,
+        cwd = root,
     })
     vim.cmd("stopinsert") -- stay in normal mode so q / Esc close the float
     for _, k in ipairs({ "q", "<Esc>" }) do
         vim.keymap.set("n", k, "<cmd>close<cr>", { buffer = buf, nowait = true, silent = true })
     end
+end
+
+-- Pop up `jj diff` for the file under the panel cursor (the panel's `d` key).
+function M.diff_file()
+    local path = state.line_files[vim.api.nvim_win_get_cursor(0)[1]]
+    if not path then
+        return
+    end
+    diff_float(path, state.root)
+end
+
+-- Pop up `jj diff` for an arbitrary file, independent of the panel: bind this to
+-- diff the file you are editing, e.g. >lua
+--     vim.keymap.set("n", "<leader>d", function()
+--         require("jj-view").diff_path(vim.fn.expand("%:p"))
+--     end)
+-- <
+-- The workspace root is resolved from the file's own directory, so it works
+-- whether or not the panel is open and even when nvim's cwd is a different repo.
+function M.diff_path(path)
+    if not path or path == "" then
+        vim.notify("jj-view: no file to diff", vim.log.levels.WARN)
+        return
+    end
+    local root = get_root(vim.fn.fnamemodify(path, ":h"))
+    if not root then
+        vim.notify("jj-view: not in a jj repo", vim.log.levels.WARN)
+        return
+    end
+    diff_float(path, root)
 end
 
 -- ===== setup =====
