@@ -76,7 +76,8 @@ end)
 
 it("d: opens a floating terminal jj diff for the file under the cursor", function()
     jv.setup()
-    jv.open() -- cursor lands on the first file line
+    jv.open()
+    vim.api.nvim_set_current_win(panel_win()) -- `d` fires from inside the panel
     jv.diff_file()
     vim.wait(100)
     local float

@@ -9,6 +9,9 @@ M.version = "0.1.0"
 
 local config = {
     width = 38,
+    -- when false (the default), opening the panel leaves your cursor where it
+    -- was instead of jumping into the panel; set true to focus it on open.
+    focus_on_open = false,
 }
 
 local ns = vim.api.nvim_create_namespace("jjview")
@@ -245,6 +248,12 @@ function M.open()
         if first ~= math.huge then
             vim.api.nvim_win_set_cursor(state.win, { first, 0 })
         end
+    end
+
+    -- `topleft vsplit` moved the cursor into the panel; unless asked to focus
+    -- it, hand focus back to where you were so the panel opens as a preview.
+    if not config.focus_on_open and vim.api.nvim_win_is_valid(state.prev_win) then
+        vim.api.nvim_set_current_win(state.prev_win)
     end
 end
 
