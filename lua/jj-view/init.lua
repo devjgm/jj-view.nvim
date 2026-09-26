@@ -124,7 +124,7 @@ local function set_highlights()
     local function d(name, link)
         vim.api.nvim_set_hl(0, name, { link = link, default = true })
     end
-    d("JjViewTitle", "Title") -- banner and the "Files (N)" heading
+    d("JjViewTitle", "Title") -- banner and the "Files (N)" summary
     d("JjViewLabel", "Label") -- field labels: Change / Bookmark / Parent
     d("JjViewChange", "Identifier") -- change ids
     d("JjViewBookmark", "Special") -- bookmark names

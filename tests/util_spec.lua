@@ -122,16 +122,24 @@ it("parse_stat: no totals line is nil", function()
     eq(util.parse_stat(""), nil)
 end)
 
-it("build_lines: +/- totals sit right below the files", function()
+it("build_lines: count and +/- totals share one line after the files", function()
     local meta = { change = "abcd1234", bookmark = "", description = "" }
     local files = { { status = "M", path = "a.rs", abs = "/r/a.rs" } }
     local lines = util.build_lines(meta, files, { added = 12, removed = 3 }, {}, 38, "9.9.9")
+    local found = false
     for i, l in ipairs(lines) do
         if l == "  M a.rs" then
-            eq(lines[i + 1], "  +12 -3")
+            eq(lines[i + 1], "  Files (1)  +12 -3")
+            found = true
         end
     end
-    eq(vim.tbl_contains(lines, "  +12 -3"), true)
+    eq(found, true)
+end)
+
+it("build_lines: no files shows just the count", function()
+    local meta = { change = "abcd1234", bookmark = "", description = "" }
+    local lines = util.build_lines(meta, {}, nil, {}, 38, "9.9.9")
+    eq(vim.tbl_contains(lines, "  Files (0)"), true)
 end)
 
 it("build_lines: banner + version, files map to abs paths, parent at the bottom", function()

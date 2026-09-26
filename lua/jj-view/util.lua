@@ -172,22 +172,23 @@ function M.build_lines(meta, files, stats, parents, width, version)
     end
     add("")
 
-    mark(add("  Files (" .. #files .. ")"), 0, -1, "JjViewTitle")
-    if #files == 0 then
-        mark(add("  (working copy clean)"), 0, -1, "JjViewLabel")
-    else
-        for _, f in ipairs(files) do
-            local frow = add("  " .. f.status .. " " .. M.truncate_left(f.path, width - 5))
-            mark(frow, 2, 3, M.status_group(f.status)) -- status letter, diff-colored
-            mark(frow, 4, -1, "JjViewFile") -- path, underlined = actionable
-            line_files[frow + 1] = f.abs
-        end
-        if stats then
-            local plus, minus = "+" .. stats.added, "-" .. stats.removed
-            local srow = add("  " .. plus .. " " .. minus)
-            mark(srow, 2, 2 + #plus, "JjViewAdded")
-            mark(srow, 3 + #plus, -1, "JjViewRemoved")
-        end
+    for _, f in ipairs(files) do
+        local frow = add("  " .. f.status .. " " .. M.truncate_left(f.path, width - 5))
+        mark(frow, 2, 3, M.status_group(f.status)) -- status letter, diff-colored
+        mark(frow, 4, -1, "JjViewFile") -- path, underlined = actionable
+        line_files[frow + 1] = f.abs
+    end
+    local heading = "  Files (" .. #files .. ")"
+    local text = heading
+    if stats and #files > 0 then
+        text = text .. "  +" .. stats.added .. " -" .. stats.removed
+    end
+    local srow = add(text)
+    mark(srow, 0, #heading, "JjViewTitle")
+    if #text > #heading then
+        local minus_col = text:find(" -", #heading + 3, true)
+        mark(srow, #heading + 2, minus_col - 1, "JjViewAdded")
+        mark(srow, minus_col, -1, "JjViewRemoved")
     end
 
     add("")

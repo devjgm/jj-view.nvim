@@ -84,7 +84,7 @@ restyle: >lua
 
     vim.api.nvim_set_hl(0, "JjViewFile", { link = "Directory" })
 <
-    JjViewTitle     banner and the "Files (N)" heading (default: Title)
+    JjViewTitle     banner and the "Files (N)" summary (default: Title)
     JjViewLabel     field labels: Change/Bookmark/Parent (default: Label)
     JjViewChange    change ids (default: Identifier)
     JjViewBookmark  bookmark names (default: Special)
