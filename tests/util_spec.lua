@@ -109,6 +109,31 @@ it("parse_parents: multiple parents (a merge)", function()
     })
 end)
 
+it("parse_stat: totals from the last line", function()
+    local out = "a.rs | 3 ++-\nb.rs | 1 -\n2 files changed, 2 insertions(+), 2 deletions(-)\n"
+    eq(util.parse_stat(out), { added = 2, removed = 2 })
+end)
+
+it("parse_stat: singular forms and a missing side", function()
+    eq(util.parse_stat("a.rs | 1 +\n1 file changed, 1 insertion(+)\n"), { added = 1, removed = 0 })
+end)
+
+it("parse_stat: no totals line is nil", function()
+    eq(util.parse_stat(""), nil)
+end)
+
+it("build_lines: +/- totals sit right below the files", function()
+    local meta = { change = "abcd1234", bookmark = "", description = "" }
+    local files = { { status = "M", path = "a.rs", abs = "/r/a.rs" } }
+    local lines = util.build_lines(meta, files, { added = 12, removed = 3 }, {}, 38, "9.9.9")
+    for i, l in ipairs(lines) do
+        if l == "  M a.rs" then
+            eq(lines[i + 1], "  +12 -3")
+        end
+    end
+    eq(vim.tbl_contains(lines, "  +12 -3"), true)
+end)
+
 it("build_lines: banner + version, files map to abs paths, parent at the bottom", function()
     local meta = { change = "abcd1234", bookmark = "greg/x", description = "hi" }
     local files = {
@@ -116,7 +141,7 @@ it("build_lines: banner + version, files map to abs paths, parent at the bottom"
         { status = "A", path = "b.rs", abs = "/r/b.rs" },
     }
     local parents = { { change = "pppp0000", bookmark = "main" } }
-    local lines, hl, line_files = util.build_lines(meta, files, parents, 38, "9.9.9")
+    local lines, hl, line_files = util.build_lines(meta, files, nil, parents, 38, "9.9.9")
 
     eq(lines[1], " jj-view  v9.9.9")
 

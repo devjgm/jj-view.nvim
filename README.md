@@ -8,7 +8,7 @@ It shows:
 - the current change id
 - the current bookmark, if any
 - the current description
-- every file edited in the working copy (`jj st`)
+- every file edited in the working copy (`jj st`), with +/- line totals
 - the parent change: short id and bookmark
 
 Press `<CR>` on a file to open it in the main window, `p` to open it while

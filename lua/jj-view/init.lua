@@ -89,6 +89,15 @@ local function get_files(root, ignore_wc)
     return util.parse_summary(out, root)
 end
 
+-- Line totals for the working-copy change, from `jj diff --stat`.
+local function get_stats(ignore_wc)
+    local ok, out = jj({ "diff", "-r", "@", "--stat" }, ignore_wc)
+    if not ok then
+        return nil
+    end
+    return util.parse_stat(out)
+end
+
 -- The parent commit(s) of @: short change id and local bookmarks. Usually one;
 -- a merge has several. \x1f separates the fields so a bookmark's spaces survive.
 local function get_parents(ignore_wc)
@@ -141,8 +150,10 @@ local function render(ignore_wc)
     end
     local meta = get_meta(ignore_wc) or { change = "?", bookmark = "", description = "" }
     local files = get_files(root, ignore_wc)
+    local stats = get_stats(ignore_wc)
     local parents = get_parents(ignore_wc)
-    local lines, hl, line_files = util.build_lines(meta, files, parents, config.width, M.version)
+    local lines, hl, line_files =
+        util.build_lines(meta, files, stats, parents, config.width, M.version)
 
     -- remember the file under the cursor so a refresh does not move the rug
     local keep_abs

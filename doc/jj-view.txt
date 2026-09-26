@@ -20,6 +20,7 @@ It shows, for the working-copy commit (@):
     - the local bookmark, if any
     - the description
     - every edited file (the `jj st` set), with M/A/D status
+    - the total lines added and removed, below the files
     - the parent change: short id and bookmark
 
 The file paths are underlined; that is the cue that only those lines are
@@ -90,9 +91,9 @@ restyle: >lua
     JjViewDesc      the description text (default: Comment)
     JjViewFile      actionable file paths (default: Directory fg, underlined)
     JjViewHint      the footer key hints (default: NonText)
-    JjViewAdded     added-file status letter (default: Added)
+    JjViewAdded     added-file status letter and +N (default: Added)
     JjViewModified  modified-file status letter (default: Changed)
-    JjViewRemoved   removed-file status letter (default: Removed)
+    JjViewRemoved   removed-file status letter and -N (default: Removed)
     JjViewRenamed   renamed/copied status letter (default: Changed)
 
 The file paths are underlined (JjViewFile) as the cue that only those lines are

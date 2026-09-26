@@ -115,15 +115,30 @@ function M.parse_parents(out)
     return parents
 end
 
+-- Parse the totals line at the end of `jj diff --stat` ("3 files changed, 10
+-- insertions(+), 2 deletions(-)") into { added, removed }. nil if absent.
+function M.parse_stat(out)
+    local lines = vim.split(vim.trim(out), "\n", { plain = true })
+    local last = lines[#lines] or ""
+    if not last:match("files? changed") then
+        return nil
+    end
+    return {
+        added = tonumber(last:match("(%d+) insertions?")) or 0,
+        removed = tonumber(last:match("(%d+) deletions?")) or 0,
+    }
+end
+
 -- Build the panel body from already-fetched data. Pure (no windows, no jj), so
--- the whole layout is unit-testable. Returns:
+-- the whole layout is unit-testable. stats (from parse_stat) may be nil, which
+-- leaves out the +/- totals line under the files. Returns:
 --   lines       list of strings
 --   hl          list of { row, col, end_col, group }; end_col -1 = to line end
 --   line_files  map of 1-based line number -> absolute path to open
 -- The top focuses on the current change (meta + files); the bottom shows the
 -- parent. The file paths are underlined (JjViewFile), the one visual cue that
 -- those are the actionable lines.
-function M.build_lines(meta, files, parents, width, version)
+function M.build_lines(meta, files, stats, parents, width, version)
     local lines, hl, line_files = {}, {}, {}
     local function add(text)
         table.insert(lines, text)
@@ -166,6 +181,12 @@ function M.build_lines(meta, files, parents, width, version)
             mark(frow, 2, 3, M.status_group(f.status)) -- status letter, diff-colored
             mark(frow, 4, -1, "JjViewFile") -- path, underlined = actionable
             line_files[frow + 1] = f.abs
+        end
+        if stats then
+            local plus, minus = "+" .. stats.added, "-" .. stats.removed
+            local srow = add("  " .. plus .. " " .. minus)
+            mark(srow, 2, 2 + #plus, "JjViewAdded")
+            mark(srow, 3 + #plus, -1, "JjViewRemoved")
         end
     end
 
