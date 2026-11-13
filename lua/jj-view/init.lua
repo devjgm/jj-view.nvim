@@ -401,7 +401,11 @@ function M.diff_path(path)
         vim.notify("jj-view: no file to diff", vim.log.levels.WARN)
         return
     end
-    local root = get_root(vim.fn.fnamemodify(path, ":h"))
+    -- jj rejects a path that reaches the repo through a symlinked directory,
+    -- so resolve the directory (not the file: it may be a tracked symlink)
+    local dir = vim.fn.resolve(vim.fn.fnamemodify(path, ":h"))
+    path = dir .. "/" .. vim.fn.fnamemodify(path, ":t")
+    local root = get_root(dir)
     if not root then
         vim.notify("jj-view: not in a jj repo", vim.log.levels.WARN)
         return
