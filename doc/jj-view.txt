@@ -39,6 +39,8 @@ setup() accepts: >lua
 
     require("jj-view").setup({
         width = 38,        -- panel width in columns
+        diff_pager = nil,  -- pager for the diff float, must not page itself,
+                           -- e.g. { "delta", "--paging=never" }
     })
 <
 ==============================================================================

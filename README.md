@@ -60,8 +60,13 @@ the panel closed and even when nvim's cwd is a different repo than the file.
 ```lua
 require("jj-view").setup({
     width = 38,      -- panel width
+    diff_pager = nil, -- pager for the diff float, e.g. { "delta", "--paging=never" }
 })
 ```
+
+`diff_pager` runs the diff float through a pager, so you can get delta's
+side-by-side view inside nvim. It must not page itself (no `less`), or it
+takes over the float. Unset, the float shows jj's own output.
 
 ## Requirements
 

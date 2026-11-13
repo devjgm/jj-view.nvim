@@ -12,6 +12,9 @@ local config = {
     -- when false (the default), opening the panel leaves your cursor where it
     -- was instead of jumping into the panel; set true to focus it on open.
     focus_on_open = false,
+    -- pager command for the diff float, e.g. { "delta", "--paging=never" };
+    -- it must not page itself. nil shows jj's own output.
+    diff_pager = nil,
 }
 
 local ns = vim.api.nvim_create_namespace("jjview")
@@ -359,8 +362,14 @@ local function diff_float(path, root)
         title = " jj diff: " .. vim.fn.fnamemodify(path, ":t") .. " ",
     })
     vim.bo[buf].bufhidden = "wipe"
-    -- never paginate: a pager would hijack the floating terminal
-    vim.fn.jobstart({ "jj", "--config", "ui.paginate=never", "diff", path }, {
+    -- a paging pager would hijack the floating terminal, so only use one
+    -- the user says doesn't page
+    local cmd = { "jj", "--config", "ui.paginate=never", "diff", path }
+    if config.diff_pager then
+        local pager = "ui.pager=" .. vim.json.encode(config.diff_pager)
+        cmd = { "jj", "--config", "ui.paginate=auto", "--config", pager, "diff", path }
+    end
+    vim.fn.jobstart(cmd, {
         term = true,
         cwd = root,
     })
